@@ -5,3 +5,6 @@ node_modules/
 *.log
 dist/
 data/
+
+# Database file (contains user data, do not commit)
+src/store/db.json
