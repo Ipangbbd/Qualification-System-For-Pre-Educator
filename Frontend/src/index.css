@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sf-text text-body text-ink bg-canvas antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sf-display;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-white font-sf-text text-body rounded-pill px-[22px] py-[11px] 
+           transition-transform active:scale-95 
+           hover:bg-primary-focus focus:outline-2 focus:outline-primary-focus;
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent text-primary font-sf-text text-body rounded-pill px-[22px] py-[11px]
+           border border-primary transition-transform active:scale-95
+           hover:border-primary-focus focus:outline-2 focus:outline-primary-focus;
+  }
+  
+  .btn-dark {
+    @apply bg-ink text-white font-sf-text text-caption rounded-sm px-[15px] py-[8px]
+           transition-transform active:scale-95;
+  }
+  
+  .product-tile {
+    @apply w-full py-section px-4 md:px-8 lg:px-16 text-center;
+  }
+  
+  .product-shadow {
+    filter: drop-shadow(0 5px 30px rgba(0, 0, 0, 0.22));
+  }
+}
