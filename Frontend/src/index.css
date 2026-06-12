@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply font-sf-text text-body text-ink bg-canvas antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sf-display;
+  }
+}
+
+@layer components {
+  .btn-primary {
+      @apply bg-ink text-white font-sf-text text-body rounded-pill px-[22px] py-[11px]
+        transition-transform active:scale-95
+        hover:bg-ink/95 focus:outline-2 focus:outline-primary-focus;
+  }
+  
+  .btn-secondary {
+    @apply bg-transparent text-primary font-sf-text text-body rounded-pill px-[22px] py-[11px]
+           border border-primary transition-transform active:scale-95
+           hover:border-primary-focus focus:outline-2 focus:outline-primary-focus;
+  }
+  
+  .btn-dark {
+    @apply bg-ink text-white font-sf-text text-caption rounded-sm px-[15px] py-[8px]
+           transition-transform active:scale-95;
+  }
+  
+  .product-tile {
+    @apply w-full py-section px-4 md:px-8 lg:px-16 text-center;
+  }
+  
+  .product-shadow {
+    box-shadow: 0 20px 40px rgba(0,0,0,0.06);
+  }
+
+  .card-apple {
+    @apply bg-canvas-parchment rounded-card p-6;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+  }
+
+  .glass-mockup {
+    background: rgba(255,255,255,0.6);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+    border-radius: 16px;
+    box-shadow: 0 30px 60px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.04);
+  }
+}
