@@ -4,7 +4,7 @@ export default function HeroSection() {
   return (
     <section className="product-tile bg-canvas pb-0">
       <div className="max-w-[980px] mx-auto">
-        <h1 className="text-hero font-sf-display mb-4">
+        <h1 className="text-hero font-sf-display font-extrabold text-ink mb-4">
           Wujudkan Karir Mengajar<br />Impian Anda
         </h1>
         
@@ -24,67 +24,67 @@ export default function HeroSection() {
 
         {/* Dashboard Product Showcase */}
         <div className="mt-16 pb-section product-shadow max-w-[1200px] mx-auto">
-          <div className="bg-surface-tile-1 rounded-lg overflow-hidden border border-surface-tile-3">
+          <div className="glass-mockup rounded-card overflow-hidden">
             {/* Dashboard Header */}
-            <div className="bg-surface-tile-2 px-6 py-4 border-b border-surface-tile-3">
+            <div className="px-6 py-4 border-b border-hairline bg-white/30 backdrop-blur-sm">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 rounded-full bg-[#ff5f57]"></div>
                   <div className="w-3 h-3 rounded-full bg-[#ffbd2e]"></div>
                   <div className="w-3 h-3 rounded-full bg-[#28ca42]"></div>
                 </div>
-                <span className="text-caption text-body-muted">Dashboard Kualifikasi</span>
+                <span className="text-caption text-ink-muted-48">Dashboard Kualifikasi</span>
                 <div className="w-16"></div>
               </div>
             </div>
 
             {/* Dashboard Content */}
-            <div className="p-8 md:p-12">
+            <div className="p-8 md:p-12 bg-transparent">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h3 className="text-display-md text-white mb-2">Halo, Budi Santoso</h3>
-                  <p className="text-body text-body-muted">Status: Tahap 2 - Tes Technical Skill</p>
+                  <h3 className="text-display-md text-ink mb-2">Halo, Budi Santoso</h3>
+                  <p className="text-body text-ink-muted-48">Status: Tahap 2 - Tes Technical Skill</p>
                 </div>
-                <div className="bg-primary/20 rounded-pill px-4 py-2">
-                  <span className="text-caption-strong text-primary-dark">In Progress</span>
+                <div className="bg-ink/5 rounded-pill px-4 py-2">
+                  <span className="text-caption-strong text-ink">In Progress</span>
                 </div>
               </div>
 
               {/* Progress Steps */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <div className="bg-surface-tile-2 rounded-lg p-6 border-2 border-primary">
+                <div className="bg-white/6 rounded-lg p-6">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-caption-strong">✓</div>
-                    <span className="text-caption-strong text-white">Tahap 1</span>
+                    <div className="w-8 h-8 rounded-full bg-ink/90 flex items-center justify-center text-white text-caption-strong">✓</div>
+                    <span className="text-caption-strong text-ink">Tahap 1</span>
                   </div>
-                  <h4 className="text-body-strong text-white mb-2">Tes Kemampuan Dasar</h4>
-                  <p className="text-caption text-body-muted mb-3">IQ & EQ Assessment</p>
-                  <div className="bg-primary/20 rounded-sm px-3 py-1 inline-block">
-                    <span className="text-caption text-primary-dark">Lolos</span>
+                  <h4 className="text-body-strong text-ink mb-2">Tes Kemampuan Dasar</h4>
+                  <p className="text-caption text-ink-muted-48 mb-3">IQ & EQ Assessment</p>
+                  <div className="bg-ink/5 rounded-sm px-3 py-1 inline-block">
+                    <span className="text-caption text-ink">Lolos</span>
                   </div>
                 </div>
 
-                <div className="bg-surface-tile-2 rounded-lg p-6 border-2 border-primary-dark">
+                <div className="bg-white/6 rounded-lg p-6">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-primary-dark flex items-center justify-center text-white text-caption-strong">2</div>
-                    <span className="text-caption-strong text-primary-dark">Tahap 2</span>
+                    <div className="w-8 h-8 rounded-full bg-ink/90 flex items-center justify-center text-white text-caption-strong">2</div>
+                    <span className="text-caption-strong text-ink">Tahap 2</span>
                   </div>
-                  <h4 className="text-body-strong text-white mb-2">Tes Technical Skill</h4>
-                  <p className="text-caption text-body-muted mb-3">Interview Scheduled</p>
-                  <div className="bg-primary-dark/20 rounded-sm px-3 py-1 inline-block">
-                    <span className="text-caption text-primary-dark">15 Juni 2026</span>
+                  <h4 className="text-body-strong text-ink mb-2">Tes Technical Skill</h4>
+                  <p className="text-caption text-ink-muted-48 mb-3">Interview Scheduled</p>
+                  <div className="bg-ink/5 rounded-sm px-3 py-1 inline-block">
+                    <span className="text-caption text-ink">15 Juni 2026</span>
                   </div>
                 </div>
 
-                <div className="bg-surface-tile-2/50 rounded-lg p-6 border border-surface-tile-3">
+                <div className="bg-white/4 rounded-lg p-6">
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="w-8 h-8 rounded-full bg-surface-tile-3 flex items-center justify-center text-body-muted text-caption-strong">3</div>
-                    <span className="text-caption text-body-muted">Tahap 3</span>
+                    <div className="w-8 h-8 rounded-full bg-surface-chip flex items-center justify-center text-ink text-caption-strong">3</div>
+                    <span className="text-caption text-ink-muted-48">Tahap 3</span>
                   </div>
-                  <h4 className="text-body-strong text-body-muted mb-2">Tes Praktik Mengajar</h4>
-                  <p className="text-caption text-body-muted mb-3">Locked</p>
-                  <div className="bg-surface-tile-3 rounded-sm px-3 py-1 inline-block">
-                    <span className="text-caption text-body-muted">Menunggu</span>
+                  <h4 className="text-body-strong text-ink-muted-48 mb-2">Tes Praktik Mengajar</h4>
+                  <p className="text-caption text-ink-muted-48 mb-3">Locked</p>
+                  <div className="bg-surface-chip rounded-sm px-3 py-1 inline-block">
+                    <span className="text-caption text-ink-muted-48">Menunggu</span>
                   </div>
                 </div>
               </div>

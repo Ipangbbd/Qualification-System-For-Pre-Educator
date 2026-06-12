@@ -13,8 +13,8 @@ export default function CTASection() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-          <button className="btn-primary text-[18px] font-light px-[28px] py-[14px]">
-            Daftar Gratis
+          <button className="btn-primary text-[18px] font-semibold px-[28px] py-[14px]">
+            Daftar sekarang
           </button>
           <a href="#cara-kerja" className="text-primary text-body hover:text-primary-focus transition">
             Lihat cara kerjanya →

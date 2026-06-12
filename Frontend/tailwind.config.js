@@ -57,6 +57,7 @@ export default {
         'sm': '8px',
         'md': '11px',
         'lg': '18px',
+        'card': '24px',
         'pill': '9999px',
       },
     },

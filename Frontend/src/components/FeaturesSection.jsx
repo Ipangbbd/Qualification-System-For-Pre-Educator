@@ -35,16 +35,20 @@ export default function FeaturesSection() {
           Proses kualifikasi yang dirancang untuk mendukung kesuksesan Anda menjadi pengajar profesional.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
           {features.map((feature, index) => (
             <div 
               key={index}
-              className="bg-canvas rounded-lg p-lg border border-hairline hover:border-primary/30 transition-all hover:shadow-lg"
+              className={
+                `p-lg transition-all ${index === 0 ? 'md:col-span-3 md:row-span-2' : 'md:col-span-1'} bg-canvas-parchment rounded-card`
+              }
             >
-              <div className="text-display-lg text-primary mb-4">
-                {feature.icon}
+              <div className="mb-4 text-ink">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="inline-block">
+                  <path d="M12 2v20M2 12h20" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
-              <h3 className="text-tagline mb-3">
+              <h3 className="text-tagline mb-3 text-ink">
                 {feature.title}
               </h3>
               <p className="text-caption text-ink-muted-80">
