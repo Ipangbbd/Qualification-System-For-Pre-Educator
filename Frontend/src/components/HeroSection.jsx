@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function HeroSection() {
+export default function HeroSection({ onStart }) {
   return (
     <section className="product-tile bg-canvas pb-0">
       <div className="max-w-[980px] mx-auto">
@@ -14,7 +14,7 @@ export default function HeroSection() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-          <button className="btn-primary">
+          <button onClick={typeof onStart === 'function' ? onStart : undefined} className="btn-primary">
             Mulai Tes Kualifikasi
           </button>
           <a href="#cara-kerja" className="btn-secondary">
