@@ -1,0 +1,13 @@
+{
+  "name": "qualification-system",
+  "version": "1.0.0",
+  "description": "Qualification System for Pre-Educator — monorepo root",
+  "scripts": {
+    "dev": "concurrently --names \"BACKEND,FRONTEND\" --prefix-colors \"cyan,magenta\" \"npm run dev --prefix Product\" \"npm run dev --prefix Frontend\"",
+    "start": "npm start --prefix Product",
+    "install:all": "npm install --prefix Product && npm install --prefix Frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
