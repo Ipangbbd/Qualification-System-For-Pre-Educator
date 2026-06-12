@@ -1,6 +1,6 @@
 import React from 'react'
 
-export default function CTASection() {
+export default function CTASection({ onStart }) {
   return (
     <section className="product-tile bg-canvas-parchment">
       <div className="max-w-[980px] mx-auto">
@@ -13,7 +13,7 @@ export default function CTASection() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-          <button className="btn-primary text-[18px] font-semibold px-[28px] py-[14px]">
+          <button onClick={typeof onStart === 'function' ? onStart : undefined} className="btn-primary text-[18px] font-semibold px-[28px] py-[14px]">
             Daftar sekarang
           </button>
           <a href="#cara-kerja" className="text-primary text-body hover:text-primary-focus transition">
