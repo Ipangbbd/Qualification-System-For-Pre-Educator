@@ -1,19 +1,24 @@
 // ============================================================
 // AUTH SERVICE — Autentikasi pengguna (login, register, logout)
+// Menggunakan JWT untuk autentikasi Node.js backend
 // ============================================================
 
 import { v4 as uuidv4 } from 'uuid';
+import jwt from 'jsonwebtoken';
 import {
-  getAll, insert, findWhere, COLLECTIONS,
-  saveSession, getSession, clearSession,
+  getAll, insert, findWhere, COLLECTIONS
 } from '../store/db.js';
 
+const JWT_SECRET = process.env.JWT_SECRET || 'super-secret-key';
+
 /**
- * Daftarkan pengguna baru (role default: teacher)
- * @param {{ name: string, email: string, password: string }} data
- * @returns {Promise<{ success: boolean, user?: Object, error?: string }>}
+ * Daftarkan pengguna baru
+ * @param {string} name 
+ * @param {string} email 
+ * @param {string} password 
+ * @param {string} role 
  */
-export async function register({ name, email, password }) {
+export async function registerUser(name, email, password, role = 'teacher') {
   if (!name || !email || !password) {
     return { success: false, error: 'Semua kolom wajib diisi.' };
   }
@@ -30,25 +35,25 @@ export async function register({ name, email, password }) {
     id: uuidv4(),
     name,
     email,
-    password, // di produksi: hash dengan bcrypt
-    role: 'teacher',
+    password, // demo: plain text
+    role,
     createdAt: new Date().toISOString(),
   };
 
   await insert(COLLECTIONS.USERS, newUser);
 
   const { password: _, ...safeUser } = newUser;
-  saveSession(safeUser);
+  const token = jwt.sign({ id: safeUser.id, role: safeUser.role }, JWT_SECRET, { expiresIn: '1d' });
 
-  return { success: true, user: safeUser };
+  return { success: true, user: safeUser, token };
 }
 
 /**
  * Login pengguna
- * @param {{ email: string, password: string }} credentials
- * @returns {Promise<{ success: boolean, user?: Object, error?: string }>}
+ * @param {string} username (email)
+ * @param {string} password 
  */
-export async function login({ email, password }) {
+export async function loginUser(email, password) {
   if (!email || !password) {
     return { success: false, error: 'Email dan password wajib diisi.' };
   }
@@ -64,46 +69,32 @@ export async function login({ email, password }) {
   }
 
   const { password: _, ...safeUser } = user;
-  saveSession(safeUser);
+  const token = jwt.sign({ id: safeUser.id, role: safeUser.role }, JWT_SECRET, { expiresIn: '1d' });
 
-  return { success: true, user: safeUser };
+  return { success: true, user: safeUser, token };
 }
 
 /**
- * Logout pengguna yang sedang login
- * @returns {void}
+ * Middleware untuk validasi token JWT
  */
-export function logout() {
-  clearSession();
-}
-
-/**
- * Ambil pengguna yang sedang login dari session
- * @returns {Object|null}
- */
-export function getCurrentUser() {
-  return getSession();
-}
-
-/**
- * Simulasi reset password (dalam demo: hanya cek apakah email ada)
- * @param {string} email
- * @returns {Promise<{ success: boolean, message?: string, error?: string }>}
- */
-export async function resetPassword(email) {
-  const users = await findWhere(COLLECTIONS.USERS, { email });
-  if (users.length === 0) {
-    return { success: false, error: 'Email tidak ditemukan.' };
+export function authMiddleware(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized', message: 'Token tidak disediakan.' });
   }
-  return {
-    success: true,
-    message: `Link reset password telah dikirim ke ${email}.`,
-  };
+
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded; // { id, role, iat, exp }
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Unauthorized', message: 'Token tidak valid atau kedaluwarsa.' });
+  }
 }
 
 /**
  * Ambil semua user (hanya untuk admin)
- * @returns {Promise<Array>}
  */
 export async function getAllUsers() {
   const users = await getAll(COLLECTIONS.USERS);

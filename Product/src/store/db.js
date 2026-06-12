@@ -1,9 +1,16 @@
 // ============================================================
-// DB.JS — Mock Database Engine berbasis localStorage
+// DB.JS — JSON File Database Engine
 // Menyediakan operasi CRUD generik untuk semua koleksi data
+// Menggunakan fs (File System) untuk membaca/menulis ke db.json
 // ============================================================
 
-const DB_PREFIX = 'qualifikasi_';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const DB_FILE = path.join(__dirname, 'db.json');
 
 // Nama koleksi yang tersedia
 export const COLLECTIONS = {
@@ -15,58 +22,56 @@ export const COLLECTIONS = {
 
 // ─── Helpers internal ───────────────────────────────────────
 
-function storageKey(collection) {
-  return `${DB_PREFIX}${collection}`;
-}
-
-function readCollection(collection) {
+function getDbData() {
   try {
-    const raw = localStorage.getItem(storageKey(collection));
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
+    if (!fs.existsSync(DB_FILE)) {
+      return {};
+    }
+    const raw = fs.readFileSync(DB_FILE, 'utf-8');
+    return JSON.parse(raw);
+  } catch (err) {
+    console.error('Error reading db.json:', err);
+    return {};
   }
 }
 
-function writeCollection(collection, data) {
-  localStorage.setItem(storageKey(collection), JSON.stringify(data));
+function saveDbData(data) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.error('Error writing db.json:', err);
+  }
+}
+
+function readCollection(collection) {
+  const data = getDbData();
+  return data[collection] || [];
+}
+
+function writeCollection(collection, records) {
+  const data = getDbData();
+  data[collection] = records;
+  saveDbData(data);
 }
 
 // Simulasi delay jaringan (ms) agar terasa seperti async API call nyata
-function delay(ms = 120) {
+function delay(ms = 50) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // ─── API Publik ──────────────────────────────────────────────
 
-/**
- * Ambil semua dokumen dari sebuah koleksi
- * @param {string} collection
- * @returns {Promise<Array>}
- */
 export async function getAll(collection) {
   await delay();
   return readCollection(collection);
 }
 
-/**
- * Ambil satu dokumen berdasarkan id
- * @param {string} collection
- * @param {string} id
- * @returns {Promise<Object|null>}
- */
 export async function getById(collection, id) {
   await delay();
   const records = readCollection(collection);
   return records.find((r) => r.id === id) ?? null;
 }
 
-/**
- * Cari dokumen berdasarkan field tertentu
- * @param {string} collection
- * @param {Object} query  - contoh: { role: 'teacher' }
- * @returns {Promise<Array>}
- */
 export async function findWhere(collection, query) {
   await delay();
   const records = readCollection(collection);
@@ -75,12 +80,6 @@ export async function findWhere(collection, query) {
   );
 }
 
-/**
- * Tambah satu dokumen baru
- * @param {string} collection
- * @param {Object} data  - harus sudah punya field `id`
- * @returns {Promise<Object>}
- */
 export async function insert(collection, data) {
   await delay();
   const records = readCollection(collection);
@@ -89,13 +88,6 @@ export async function insert(collection, data) {
   return data;
 }
 
-/**
- * Update dokumen berdasarkan id
- * @param {string} collection
- * @param {string} id
- * @param {Object} updates  - fields yang ingin diubah (partial update)
- * @returns {Promise<Object|null>}
- */
 export async function update(collection, id, updates) {
   await delay();
   const records = readCollection(collection);
@@ -106,12 +98,6 @@ export async function update(collection, id, updates) {
   return records[idx];
 }
 
-/**
- * Hapus dokumen berdasarkan id
- * @param {string} collection
- * @param {string} id
- * @returns {Promise<boolean>}
- */
 export async function remove(collection, id) {
   await delay();
   const records = readCollection(collection);
@@ -121,67 +107,46 @@ export async function remove(collection, id) {
   return true;
 }
 
-/**
- * Hapus SEMUA data (untuk testing / reset)
- * @param {string} collection
- * @returns {Promise<void>}
- */
 export async function clearCollection(collection) {
   await delay();
-  localStorage.removeItem(storageKey(collection));
+  const data = getDbData();
+  data[collection] = [];
+  saveDbData(data);
 }
 
-/**
- * Cek apakah database sudah diinisialisasi
- * @returns {boolean}
- */
 export function isInitialized() {
-  return localStorage.getItem(`${DB_PREFIX}initialized`) === 'true';
+  const data = getDbData();
+  return data._initialized === true;
 }
 
-/**
- * Tandai database sudah diinisialisasi
- */
 export function markInitialized() {
-  localStorage.setItem(`${DB_PREFIX}initialized`, 'true');
+  const data = getDbData();
+  data._initialized = true;
+  saveDbData(data);
 }
 
-/**
- * Reset seluruh database (hapus semua data termasuk flag init)
- */
 export function resetDatabase() {
-  Object.values(COLLECTIONS).forEach((col) => {
-    localStorage.removeItem(storageKey(col));
-  });
-  localStorage.removeItem(`${DB_PREFIX}initialized`);
-}
-
-// ─── Session (non-array) ─────────────────────────────────────
-
-/**
- * Simpan session pengguna yang sedang login
- * @param {Object} user  - objek user tanpa password
- */
-export function saveSession(user) {
-  localStorage.setItem(storageKey(COLLECTIONS.SESSION), JSON.stringify(user));
-}
-
-/**
- * Ambil session yang aktif
- * @returns {Object|null}
- */
-export function getSession() {
-  try {
-    const raw = localStorage.getItem(storageKey(COLLECTIONS.SESSION));
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
+  if (fs.existsSync(DB_FILE)) {
+    fs.unlinkSync(DB_FILE);
   }
 }
 
-/**
- * Hapus session (logout)
- */
+// ─── Session (non-array) ─────────────────────────────────────
+// Backend stateful session (untuk demo, lebih baik pakai JWT via header)
+
+export function saveSession(user) {
+  const data = getDbData();
+  data[COLLECTIONS.SESSION] = user;
+  saveDbData(data);
+}
+
+export function getSession() {
+  const data = getDbData();
+  return data[COLLECTIONS.SESSION] || null;
+}
+
 export function clearSession() {
-  localStorage.removeItem(storageKey(COLLECTIONS.SESSION));
+  const data = getDbData();
+  data[COLLECTIONS.SESSION] = null;
+  saveDbData(data);
 }
