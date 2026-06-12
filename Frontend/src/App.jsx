@@ -41,7 +41,7 @@ function App() {
         )}
 
         {route === 'dashboard' && (
-          <UserDashboard onStartExam={() => navigate('exam')} onSignOut={() => { localStorage.removeItem('edu_user'); localStorage.removeItem('edu_examScore'); navigate('home') }} />
+          <UserDashboard onStartExam={() => navigate('exam')} onSignOut={() => { localStorage.removeItem('edu_user'); localStorage.removeItem('edu_examScore'); localStorage.removeItem('edu_token'); navigate('home') }} />
         )}
 
       </main>
