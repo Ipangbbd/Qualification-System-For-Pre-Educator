@@ -1,10 +1,31 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
+
+const KKM = 80
+const COOLDOWN_DAYS = 7
+
+// Format ms remaining → "X hari HH:MM:SS"
+function formatCountdown(ms) {
+  if (ms <= 0) return '00:00:00'
+  const totalSec = Math.floor(ms / 1000)
+  const days = Math.floor(totalSec / 86400)
+  const hrs = Math.floor((totalSec % 86400) / 3600)
+  const mins = Math.floor((totalSec % 3600) / 60)
+  const secs = totalSec % 60
+  const pad = n => String(n).padStart(2, '0')
+  if (days > 0) return `${days} hari ${pad(hrs)}:${pad(mins)}:${pad(secs)}`
+  return `${pad(hrs)}:${pad(mins)}:${pad(secs)}`
+}
 
 export default function UserDashboard({ onStartExam, onSignOut }) {
   const [user, setUser] = useState(null)
   const [score, setScore] = useState(null)
-  const [qualified, setQualified] = useState(null)
-  
+  const [examPassed, setExamPassed] = useState(false)
+
+  // Cooldown
+  const [cooldownUntil, setCooldownUntil] = useState(null)
+  const [cooldownRemaining, setCooldownRemaining] = useState(0)
+  const timerRef = useRef(null)
+
   // Backend data
   const [submissions, setSubmissions] = useState([])
   const [loading, setLoading] = useState(false)
@@ -40,16 +61,43 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
   useEffect(() => {
     const u = localStorage.getItem('edu_user')
     const s = localStorage.getItem('edu_examScore')
+    const passed = localStorage.getItem('edu_examPassed') === 'true'
+    const cdUntil = localStorage.getItem('edu_examCooldownUntil')
     const token = localStorage.getItem('edu_token')
 
     setUser(u ? JSON.parse(u) : null)
     setScore(s !== null ? Number(s) : null)
-    if (s !== null) setQualified(Number(s) >= 60)
+    setExamPassed(passed)
+
+    if (cdUntil) {
+      const until = Number(cdUntil)
+      setCooldownUntil(until)
+      const remaining = until - Date.now()
+      setCooldownRemaining(remaining > 0 ? remaining : 0)
+    }
 
     if (token) {
       fetchSubmissions(token)
     }
   }, [])
+
+  // Live countdown ticker
+  useEffect(() => {
+    if (!cooldownUntil) return
+    timerRef.current = setInterval(() => {
+      const remaining = cooldownUntil - Date.now()
+      if (remaining <= 0) {
+        setCooldownRemaining(0)
+        localStorage.removeItem('edu_examCooldownUntil')
+        clearInterval(timerRef.current)
+      } else {
+        setCooldownRemaining(remaining)
+      }
+    }, 1000)
+    return () => clearInterval(timerRef.current)
+  }, [cooldownUntil])
+
+  const cooldownActive = cooldownRemaining > 0
 
   const handleSubmitDocs = async (e) => {
     e.preventDefault()
@@ -178,27 +226,67 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
               <div>
                 <h3 className="text-body-strong mb-3">📝 Tes 1: Ujian Tulis Mock</h3>
                 {score === null ? (
-                  <p className="text-caption text-ink-muted-80 mb-4">Anda belum melakukan ujian tulis mock exam. Silakan mulai ujian untuk menyimpan skor lokal.</p>
+                  <p className="text-caption text-ink-muted-80 mb-4">Anda belum melakukan ujian tulis mock exam. Silakan mulai ujian untuk menyimpan skor.</p>
                 ) : (
                   <div className="mb-4">
-                    <p className="text-lead mb-1">Skor Anda: <strong className="text-lg text-primary">{score}</strong> / 100</p>
+                    <p className="text-lead mb-1">
+                      Skor Anda: <strong className="text-lg text-primary">{score}</strong> / 100
+                    </p>
                     <p className="text-body flex items-center gap-2">
-                      Keterangan: 
-                      <span className={`px-2 py-0.5 rounded text-caption font-semibold ${qualified ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {qualified ? 'Qualified' : 'Not Qualified'}
+                      Keterangan:
+                      <span className={`px-2 py-0.5 rounded text-caption font-semibold ${examPassed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {examPassed ? '✅ Lulus' : '❌ Tidak Lulus'}
                       </span>
                     </p>
-                    <div className="text-caption text-ink-muted-48 mt-2">Passing threshold: 60</div>
+                    <div className="text-caption text-ink-muted-48 mt-1">KKM: {KKM} / 100</div>
+                  </div>
+                )}
+
+                {/* Cooldown timer */}
+                {cooldownActive && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-2">
+                    <div className="text-caption font-semibold text-amber-800 mb-1">⏰ Cooldown Aktif</div>
+                    <div className="text-2xl font-bold text-amber-700 font-mono tracking-wider">
+                      {formatCountdown(cooldownRemaining)}
+                    </div>
+                    <div className="text-caption text-amber-600 mt-1">
+                      Ujian bisa diulang setelah cooldown {COOLDOWN_DAYS} hari selesai
+                    </div>
+                  </div>
+                )}
+
+                {/* Passed badge */}
+                {examPassed && (
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-3 mt-2 text-caption text-green-800">
+                    🎉 Kamu sudah lulus Tes 1. Lanjutkan ke Tes 2 dan ajukan berkas kualifikasi.
                   </div>
                 )}
               </div>
-              <button onClick={onStartExam} className="btn-primary w-full mt-4">
-                {score === null ? 'Mulai Ujian Mock' : 'Ulangi Ujian Mock'}
+
+              <button
+                onClick={onStartExam}
+                disabled={cooldownActive}
+                className={`btn-primary w-full mt-4 ${cooldownActive ? 'opacity-40 cursor-not-allowed' : ''}`}
+              >
+                {score === null
+                  ? 'Mulai Ujian'
+                  : cooldownActive
+                    ? `Terkunci (${COOLDOWN_DAYS} hari CD)`
+                    : 'Ulangi Ujian'}
               </button>
             </div>
 
             {/* Column 2: Practical Exam Booking (Tes 2) */}
-            <div className="bg-white/50 border border-hairline rounded-card p-6 product-shadow flex flex-col justify-between">
+            <div className={`bg-white/50 border border-hairline rounded-card p-6 product-shadow flex flex-col justify-between relative ${!examPassed ? 'opacity-60' : ''}`}>
+              {/* Lock overlay */}
+              {!examPassed && (
+                <div className="absolute inset-0 rounded-card flex flex-col items-center justify-center bg-white/60 backdrop-blur-sm z-10">
+                  <span className="text-3xl mb-2">🔒</span>
+                  <p className="text-caption font-semibold text-ink-muted-80 text-center px-4">
+                    Selesaikan Tes 1 dengan nilai ≥ {KKM} untuk membuka tahap ini
+                  </p>
+                </div>
+              )}
               <div>
                 <h3 className="text-body-strong mb-3">📅 Tes 2: Praktik Mengajar</h3>
                 
