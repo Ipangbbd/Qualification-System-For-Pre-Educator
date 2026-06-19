@@ -12,6 +12,12 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
   const [docInput, setDocInput] = useState('')
   const [error, setError] = useState('')
 
+  // State for scheduling Practice Exam (Tes Kedua)
+  const [practiceMode, setPracticeMode] = useState('online')
+  const [practiceDate, setPracticeDate] = useState('')
+  const [practiceTime, setPracticeTime] = useState('')
+  const [schedulingPractice, setSchedulingPractice] = useState(false)
+
   const fetchSubmissions = async (token) => {
     try {
       setLoading(true)
@@ -83,6 +89,53 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
     }
   }
 
+  const handleSchedulePractice = async (e) => {
+    e.preventDefault()
+    if (!practiceDate || !practiceTime) {
+      setError('Silakan pilih tanggal dan waktu untuk praktik mengajar.')
+      return
+    }
+
+    const token = localStorage.getItem('edu_token')
+    if (!token) {
+      setError('Token tidak valid. Silakan sign out dan login kembali.')
+      return
+    }
+
+    try {
+      setSchedulingPractice(true)
+      setError('')
+      const res = await fetch('http://localhost:5005/api/qualifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          documents: ['Pendaftaran Tes Praktik Mengajar'],
+          practiceSchedule: {
+            mode: practiceMode,
+            date: practiceDate,
+            time: practiceTime
+          }
+        })
+      })
+
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || 'Gagal menjadwalkan tes praktik')
+      }
+
+      setPracticeDate('')
+      setPracticeTime('')
+      fetchSubmissions(token)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setSchedulingPractice(false)
+    }
+  }
+
   const translateStatus = (status) => {
     switch (status) {
       case 'under_review': return '🔍 Menunggu Review'
@@ -92,9 +145,12 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
     }
   }
 
+  // Find if there is an active scheduled practice test in submissions
+  const activeSubmissionWithSchedule = submissions.find(s => s.practiceSchedule !== null && s.practiceSchedule !== undefined)
+
   return (
     <section className="product-tile bg-canvas-parchment py-12">
-      <div className="max-w-[980px] mx-auto px-4">
+      <div className="max-w-[1200px] mx-auto px-4">
         {/* Glass Mockup Frame */}
         <div className="glass-mockup text-left p-6 md:p-8 mb-8 relative">
           {/* Mac OS Window Header */}
@@ -110,13 +166,19 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
           <h2 className="text-display-md font-sf-display mb-1">Dashboard</h2>
           <p className="text-body text-ink-muted-80 mb-6">{user ? `Halo, ${user.name} (${user.email})` : 'Halo, Pengguna'}</p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left Bento: Exam Status */}
+          {error && (
+            <div className="bg-red-50 text-red-600 text-caption p-3 rounded-md border border-red-200 mb-6">
+              ⚠️ {error}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Column 1: Exam Status (Tes 1) */}
             <div className="bg-white/50 border border-hairline rounded-card p-6 product-shadow flex flex-col justify-between">
               <div>
-                <h3 className="text-body-strong mb-3">📝 Status Ujian Mock</h3>
+                <h3 className="text-body-strong mb-3">📝 Tes 1: Ujian Tulis Mock</h3>
                 {score === null ? (
-                  <p className="text-caption text-ink-muted-80 mb-4">Anda belum melakukan mock exam. Silakan mulai mock exam untuk menyimpan skor lokal.</p>
+                  <p className="text-caption text-ink-muted-80 mb-4">Anda belum melakukan ujian tulis mock exam. Silakan mulai ujian untuk menyimpan skor lokal.</p>
                 ) : (
                   <div className="mb-4">
                     <p className="text-lead mb-1">Skor Anda: <strong className="text-lg text-primary">{score}</strong> / 100</p>
@@ -135,37 +197,110 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
               </button>
             </div>
 
-            {/* Right Bento: Submit Doc */}
-            <div className="bg-white/50 border border-hairline rounded-card p-6 product-shadow">
-              <h3 className="text-body-strong mb-3">📂 Ajukan Kualifikasi</h3>
-              
-              <form onSubmit={handleSubmitDocs} className="space-y-3">
-                {error && (
-                  <div className="bg-red-50 text-red-600 text-caption p-2 rounded border border-red-200">
-                    {error}
+            {/* Column 2: Practical Exam Booking (Tes 2) */}
+            <div className="bg-white/50 border border-hairline rounded-card p-6 product-shadow flex flex-col justify-between">
+              <div>
+                <h3 className="text-body-strong mb-3">📅 Tes 2: Praktik Mengajar</h3>
+                
+                {activeSubmissionWithSchedule ? (
+                  <div className="space-y-3">
+                    <div className="bg-canvas-parchment/60 p-3 rounded-md border border-hairline">
+                      <div className="text-caption text-ink-muted-48">Jadwal Aktif Anda:</div>
+                      <div className="text-body-strong mt-1">
+                        {activeSubmissionWithSchedule.practiceSchedule.mode === 'online' ? '🎥 Online (Zoom/Meet)' : '🏫 Langsung (Tatap Muka)'}
+                      </div>
+                      <div className="text-caption text-ink-muted-80 mt-1">
+                        Tanggal: <strong>{activeSubmissionWithSchedule.practiceSchedule.date}</strong>
+                      </div>
+                      <div className="text-caption text-ink-muted-80">
+                        Waktu: <strong>{activeSubmissionWithSchedule.practiceSchedule.time} WIB</strong>
+                      </div>
+                    </div>
+                    <div className="text-caption text-primary font-semibold flex items-center gap-1.5 mt-2 bg-blue-50 p-2 rounded border border-blue-100">
+                      <span>⏳ Status: Menunggu Observasi Mentor</span>
+                    </div>
                   </div>
+                ) : (
+                  <form onSubmit={handleSchedulePractice} className="space-y-3">
+                    <p className="text-caption text-ink-muted-80 mb-2">
+                      Pilih moda ujian praktik Anda serta atur jadwal pelaksanaannya.
+                    </p>
+                    
+                    <div>
+                      <label className="block text-caption mb-1 font-semibold text-ink-muted-80">Moda Praktik</label>
+                      <select
+                        className="w-full border border-hairline rounded-md px-3 py-2 bg-canvas focus:outline-none focus:ring-2 focus:ring-primary-focus transition-all text-caption"
+                        value={practiceMode}
+                        onChange={e => setPracticeMode(e.target.value)}
+                        disabled={schedulingPractice}
+                      >
+                        <option value="online">Online (Zoom / Google Meet)</option>
+                        <option value="offline">Langsung (Tatap Muka / Offline)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-caption mb-1 font-semibold text-ink-muted-80">Tanggal</label>
+                      <input
+                        type="date"
+                        className="w-full border border-hairline rounded-md px-3 py-2 bg-canvas focus:outline-none focus:ring-2 focus:ring-primary-focus transition-all text-caption"
+                        value={practiceDate}
+                        onChange={e => setPracticeDate(e.target.value)}
+                        disabled={schedulingPractice}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-caption mb-1 font-semibold text-ink-muted-80">Waktu / Jam</label>
+                      <input
+                        type="time"
+                        className="w-full border border-hairline rounded-md px-3 py-2 bg-canvas focus:outline-none focus:ring-2 focus:ring-primary-focus transition-all text-caption"
+                        value={practiceTime}
+                        onChange={e => setPracticeTime(e.target.value)}
+                        disabled={schedulingPractice}
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="btn-primary w-full mt-2"
+                      disabled={schedulingPractice || !practiceDate || !practiceTime}
+                    >
+                      {schedulingPractice ? 'Menyimpan Jadwal...' : 'Jadwal Sekarang'}
+                    </button>
+                  </form>
                 )}
-                <div>
-                  <label className="block text-caption mb-1 font-semibold text-ink-muted-80">
-                    Nama Dokumen (pisahkan dengan koma)
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Contoh: Ijazah S1, Sertifikat TOEFL"
-                    className="w-full border border-hairline rounded-md px-3 py-2 bg-canvas focus:outline-none focus:ring-2 focus:ring-primary-focus transition-all"
-                    value={docInput}
-                    onChange={e => setDocInput(e.target.value)}
-                    disabled={submittingDoc}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="btn-secondary w-full"
-                  disabled={submittingDoc || !docInput.trim()}
-                >
-                  {submittingDoc ? 'Mengirim...' : 'Ajukan Berkas'}
-                </button>
-              </form>
+              </div>
+            </div>
+
+            {/* Column 3: Submit Doc */}
+            <div className="bg-white/50 border border-hairline rounded-card p-6 product-shadow flex flex-col justify-between">
+              <div>
+                <h3 className="text-body-strong mb-3">📂 Ajukan Berkas Kualifikasi</h3>
+                
+                <form onSubmit={handleSubmitDocs} className="space-y-3">
+                  <div>
+                    <label className="block text-caption mb-1 font-semibold text-ink-muted-80">
+                      Nama Dokumen (pisahkan dengan koma)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: Ijazah S1, Sertifikat TOEFL"
+                      className="w-full border border-hairline rounded-md px-3 py-2 bg-canvas focus:outline-none focus:ring-2 focus:ring-primary-focus transition-all text-caption"
+                      value={docInput}
+                      onChange={e => setDocInput(e.target.value)}
+                      disabled={submittingDoc}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="btn-secondary w-full"
+                    disabled={submittingDoc || !docInput.trim()}
+                  >
+                    {submittingDoc ? 'Mengirim...' : 'Ajukan Berkas'}
+                  </button>
+                </form>
+              </div>
             </div>
           </div>
 
@@ -189,12 +324,27 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <div className="text-caption font-semibold text-ink-muted-80">Dokumen yang Diajukan:</div>
-                        <ul className="list-disc list-inside text-caption text-ink-muted-80">
-                          {sub.documents && sub.documents.map((doc, dIdx) => (
-                            <li key={dIdx}>{doc}</li>
-                          ))}
-                        </ul>
+                        {sub.documents && sub.documents.length > 0 && (
+                          <div className="mb-2">
+                            <div className="text-caption font-semibold text-ink-muted-80">Dokumen yang Diajukan:</div>
+                            <ul className="list-disc list-inside text-caption text-ink-muted-80">
+                              {sub.documents.map((doc, dIdx) => (
+                                <li key={dIdx}>{doc}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        {sub.practiceSchedule && (
+                          <div className="mt-1 bg-blue-50/50 p-2 rounded border border-blue-100/50">
+                            <div className="text-caption font-semibold text-ink-muted-80">Jadwal Praktik:</div>
+                            <div className="text-caption text-ink-muted-80">
+                              Moda: {sub.practiceSchedule.mode === 'online' ? '🎥 Online' : '🏫 Offline'}
+                            </div>
+                            <div className="text-caption text-ink-muted-80">
+                              Tanggal/Jam: {sub.practiceSchedule.date} @ {sub.practiceSchedule.time}
+                            </div>
+                          </div>
+                        )}
                       </div>
                       <div className="bg-canvas-parchment/50 p-2 rounded">
                         <div className="text-caption font-semibold text-ink-muted-80">Detail Nilai Asesmen:</div>
@@ -239,4 +389,5 @@ export default function UserDashboard({ onStartExam, onSignOut }) {
     </section>
   )
 }
+
 

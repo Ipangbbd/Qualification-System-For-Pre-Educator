@@ -30,7 +30,7 @@ router.get('/', authMiddleware, async (req, res) => {
  */
 router.post('/', authMiddleware, async (req, res) => {
   try {
-    const { documents } = req.body;
+    const { documents, practiceSchedule } = req.body;
     
     if (req.user.role !== 'teacher') {
       return res.status(403).json({ error: 'Forbidden', message: 'Hanya pengajar yang bisa membuat pengajuan' });
@@ -41,6 +41,7 @@ router.post('/', authMiddleware, async (req, res) => {
       teacherId: req.user.id,
       status: 'under_review',
       documents: documents || [],
+      practiceSchedule: practiceSchedule || null,
       scores: { akademik: 0, pengalaman: 0, kompetensi: 0 },
       totalScore: 0,
       adminNotes: '',
