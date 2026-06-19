@@ -1,5 +1,9 @@
 import React, { useState } from 'react'
 
+const KKM = 80
+const COOLDOWN_DAYS = 7
+const COOLDOWN_MS = COOLDOWN_DAYS * 24 * 60 * 60 * 1000
+
 const QUESTIONS = [
   {
     id: 1,
@@ -21,9 +25,9 @@ const QUESTIONS = [
   },
   {
     id: 4,
-    q: 'Berapa minimal passing mock exam untuk lolos?',
-    opts: ['50', '60', '75', '80'],
-    a: 1
+    q: 'Berapa minimal nilai untuk lulus ujian ini?',
+    opts: ['60', '70', '80', '90'],
+    a: 2
   },
   {
     id: 5,
@@ -54,46 +58,71 @@ export default function MockExam({ onComplete, onCancel }) {
     const finalScore = Math.round(total)
     setScore(finalScore)
     setSubmitted(true)
+
+    const passed = finalScore >= KKM
     localStorage.setItem('edu_examScore', String(finalScore))
+    localStorage.setItem('edu_examPassed', passed ? 'true' : 'false')
+
+    // Kalau tidak lulus → set cooldown timestamp
+    if (!passed) {
+      const cooldownUntil = Date.now() + COOLDOWN_MS
+      localStorage.setItem('edu_examCooldownUntil', String(cooldownUntil))
+    } else {
+      // Kalau lulus → hapus cooldown
+      localStorage.removeItem('edu_examCooldownUntil')
+    }
   }
 
   const handleFinish = () => {
     if (typeof onComplete === 'function') onComplete()
   }
 
-  // ── Result screen ──────────────────────────────────────────
+  // ── Result screen ────────────────────────────────────────────
   if (submitted && score !== null) {
-    const qualified = score >= 60
+    const passed = score >= KKM
     const correct = QUESTIONS.filter(q => answers[q.id] === q.a).length
 
     return (
       <section className="product-tile bg-canvas-parchment py-12">
         <div className="max-w-[640px] mx-auto px-4 text-center">
           <div className="bg-white/70 backdrop-blur-md border border-hairline rounded-card p-8 product-shadow">
-            {/* Icon */}
-            <div className={`text-5xl mb-4 ${qualified ? '' : ''}`}>
-              {qualified ? '🎉' : '📚'}
-            </div>
+
+            <div className="text-5xl mb-4">{passed ? '🎉' : '⏳'}</div>
 
             <h2 className="text-display-md font-sf-display mb-2">
-              {qualified ? 'Selamat! Kamu Lulus' : 'Belum Lulus'}
+              {passed ? 'Selamat! Kamu Lulus' : 'Belum Mencapai KKM'}
             </h2>
+
             <p className="text-body text-ink-muted-80 mb-6">
-              {qualified
-                ? 'Kamu memenuhi syarat minimum kualifikasi.'
-                : 'Kamu perlu mencapai minimal 60 untuk lulus.'}
+              {passed
+                ? 'Kamu memenuhi syarat minimum. Lanjut ke tahap berikutnya!'
+                : `Nilai minimum yang harus dicapai adalah ${KKM}. Kamu perlu menunggu ${COOLDOWN_DAYS} hari sebelum bisa mengulang.`}
             </p>
 
-            {/* Score display */}
-            <div className={`rounded-xl p-6 mb-6 ${qualified ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-              <div className={`text-5xl font-bold mb-1 ${qualified ? 'text-green-700' : 'text-red-600'}`}>
+            {/* Score */}
+            <div className={`rounded-xl p-6 mb-6 ${passed ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+              <div className={`text-5xl font-bold mb-1 ${passed ? 'text-green-700' : 'text-red-600'}`}>
                 {score}
               </div>
-              <div className="text-caption text-ink-muted-80">dari 100 poin</div>
+              <div className="text-caption text-ink-muted-80">dari 100 poin · KKM: {KKM}</div>
               <div className="mt-3 text-body">
                 Jawaban benar: <strong>{correct}</strong> / {QUESTIONS.length}
               </div>
             </div>
+
+            {/* Cooldown notice */}
+            {!passed && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-left">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-lg">⏰</span>
+                  <span className="text-body-strong text-amber-800">Cooldown Aktif</span>
+                </div>
+                <p className="text-caption text-amber-700">
+                  Ujian dikunci selama <strong>{COOLDOWN_DAYS} hari</strong> terhitung dari sekarang.
+                  Timer akan terlihat di dashboard dan tombol ujian akan terbuka otomatis setelah cooldown selesai.
+                </p>
+              </div>
+            )}
 
             {/* Per-question breakdown */}
             <div className="text-left space-y-3 mb-6">
@@ -102,7 +131,10 @@ export default function MockExam({ onComplete, onCancel }) {
                 const chosenOpt = q.opts[answers[q.id]]
                 const correctOpt = q.opts[q.a]
                 return (
-                  <div key={q.id} className={`p-3 rounded-md border text-caption ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+                  <div
+                    key={q.id}
+                    className={`p-3 rounded-md border text-caption ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
+                  >
                     <div className="font-semibold text-ink mb-1">{i + 1}. {q.q}</div>
                     <div className="flex flex-col gap-0.5">
                       <span>
@@ -124,7 +156,7 @@ export default function MockExam({ onComplete, onCancel }) {
             </div>
 
             <button onClick={handleFinish} className="btn-primary w-full">
-              Lihat Dashboard
+              Kembali ke Dashboard
             </button>
           </div>
         </div>
@@ -132,7 +164,7 @@ export default function MockExam({ onComplete, onCancel }) {
     )
   }
 
-  // ── Exam screen ────────────────────────────────────────────
+  // ── Exam screen ──────────────────────────────────────────────
   const answered = Object.keys(answers).length
 
   return (
@@ -140,11 +172,11 @@ export default function MockExam({ onComplete, onCancel }) {
       <div className="max-w-[720px] mx-auto px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <h2 className="text-display-md font-sf-display mb-2">Mock Exam</h2>
+          <h2 className="text-display-md font-sf-display mb-2">Ujian Tulis Mock</h2>
           <p className="text-body text-ink-muted-80">
-            Kerjakan soal berikut. Skor akhir menentukan kelayakan (≥ 60).
+            Jawab semua soal berikut. Nilai minimum lulus: <strong>{KKM}</strong> / 100.
           </p>
-          {/* Progress */}
+          {/* Progress bar */}
           <div className="mt-4 max-w-xs mx-auto">
             <div className="flex justify-between text-caption text-ink-muted-48 mb-1">
               <span>Progress</span>
